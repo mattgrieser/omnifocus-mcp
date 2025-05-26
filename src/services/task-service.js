@@ -253,8 +253,7 @@ export class TaskService {
       if (!task) {
         JSON.stringify({error: "Task not found: " + ${JSON.stringify(args.task_id)}});
       } else {
-        task.completed = true;
-        task.completionDate = new Date();
+        task.markComplete();
         JSON.stringify({
           name: task.name(),
           message: "Task completed"
