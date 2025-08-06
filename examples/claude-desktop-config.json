@@ -2,7 +2,7 @@
   "mcpServers": {
     "omnifocus": {
       "command": "node",
-      "args": ["/Users/yourusername/omnifocus-mcp/src/index.js"],
+      "args": ["/Users/mattgrieser/omnifocus-mcp/src/index.js"],
       "env": {}
     }
   }
