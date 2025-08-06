@@ -137,7 +137,7 @@ export class StatisticsService {
 
     const result = await this.bridge.executeScript(script);
     const stats = JSON.parse(result);
-    
+
     let output = `Statistics for ${args.period || 'week'}:\n`;
     output += `Total tasks: ${stats.total}\n`;
     output += `Completed: ${stats.completed} (${stats.completion_rate}%)\n`;
@@ -146,21 +146,21 @@ export class StatisticsService {
     output += `Due soon: ${stats.due_soon}\n`;
     output += `Flagged: ${stats.flagged}\n`;
     output += `With project: ${stats.has_project}\n`;
-    
+
     if (args.group_by === 'project' && Object.keys(stats.by_project).length > 0) {
       output += '\nBy Project:\n';
       for (const [project, data] of Object.entries(stats.by_project)) {
         output += `  ${project}: ${data.total} total, ${data.completed} completed, ${data.overdue} overdue\n`;
       }
     }
-    
+
     if (args.group_by === 'tag' && Object.keys(stats.by_tag).length > 0) {
       output += '\nBy Tag:\n';
       for (const [tag, data] of Object.entries(stats.by_tag)) {
         output += `  ${tag}: ${data.total} total, ${data.completed} completed, ${data.overdue} overdue\n`;
       }
     }
-    
+
     return {
       content: [
         {

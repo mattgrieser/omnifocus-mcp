@@ -101,9 +101,9 @@ export const tools = [
               name: { type: 'string' },
               note: { type: 'string' },
               project: { type: 'string' },
-              tags: { 
+              tags: {
                 type: 'array',
-                items: { type: 'string' }
+                items: { type: 'string' },
               },
               due_date: { type: 'string' },
               defer_date: { type: 'string' },
@@ -403,7 +403,15 @@ export const tools = [
               type: 'array',
               items: {
                 type: 'string',
-                enum: ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+                enum: [
+                  'sunday',
+                  'monday',
+                  'tuesday',
+                  'wednesday',
+                  'thursday',
+                  'friday',
+                  'saturday',
+                ],
               },
               description: 'For weekly repeats, specific days',
             },
@@ -555,7 +563,7 @@ export async function handleToolCall(name, args) {
       return await taskService.deferTasks(args);
     case 'organize_tasks':
       return await taskService.organizeTasks(args);
-    
+
     // Project operations
     case 'create_project':
       return await projectService.createProject(args);
@@ -567,17 +575,17 @@ export async function handleToolCall(name, args) {
       return await projectService.getProjectsForReview(args);
     case 'mark_project_reviewed':
       return await projectService.markProjectReviewed(args);
-    
+
     // Statistics
     case 'get_statistics':
       return await statisticsService.getStatistics(args);
-    
+
     // Maintenance
     case 'cleanup_completed':
       return await maintenanceService.cleanupCompleted(args);
     case 'get_overdue_tasks':
       return await maintenanceService.getOverdueTasks(args);
-    
+
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

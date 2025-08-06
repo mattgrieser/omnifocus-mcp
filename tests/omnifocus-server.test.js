@@ -1,10 +1,3 @@
-import { jest } from '@jest/globals';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 describe('OmniFocus MCP Server', () => {
   describe('Server Module', () => {
     test('should export OmniFocusServer class', async () => {
@@ -31,8 +24,8 @@ describe('OmniFocus MCP Server', () => {
 
     test('should have all expected tools', async () => {
       const { tools } = await import('../src/handlers/tool-handlers.js');
-      const toolNames = tools.map(tool => tool.name);
-      
+      const toolNames = tools.map((tool) => tool.name);
+
       const expectedTools = [
         'get_tasks',
         'create_task',
@@ -51,10 +44,10 @@ describe('OmniFocus MCP Server', () => {
         'cleanup_completed',
         'get_overdue_tasks',
         'get_projects_for_review',
-        'mark_project_reviewed'
+        'mark_project_reviewed',
       ];
 
-      expectedTools.forEach(toolName => {
+      expectedTools.forEach((toolName) => {
         expect(toolNames).toContain(toolName);
       });
     });
@@ -112,13 +105,13 @@ describe('OmniFocus MCP Server', () => {
   describe('Tool Schemas', () => {
     test('should have valid schemas for all tools', async () => {
       const { tools } = await import('../src/handlers/tool-handlers.js');
-      
-      tools.forEach(tool => {
+
+      tools.forEach((tool) => {
         expect(tool).toHaveProperty('name');
         expect(tool).toHaveProperty('description');
         expect(tool).toHaveProperty('inputSchema');
         expect(tool.inputSchema).toHaveProperty('type', 'object');
-        
+
         if (tool.inputSchema.required) {
           expect(Array.isArray(tool.inputSchema.required)).toBe(true);
         }
@@ -135,10 +128,10 @@ describe('OmniFocus MCP Server', () => {
           { due_today: true },
           { due_soon: true },
           { project: 'Test Project' },
-          { tag: 'urgent' }
+          { tag: 'urgent' },
         ];
 
-        filters.forEach(filter => {
+        filters.forEach((filter) => {
           expect(filter).toHaveProperty(Object.keys(filter)[0]);
         });
       });
@@ -147,7 +140,7 @@ describe('OmniFocus MCP Server', () => {
     describe('createTask', () => {
       test('should validate required fields', () => {
         const validTask = {
-          name: 'Test Task'
+          name: 'Test Task',
         };
 
         expect(validTask).toHaveProperty('name');
@@ -163,7 +156,7 @@ describe('OmniFocus MCP Server', () => {
           due_date: '2024-12-31',
           defer_date: '2024-12-01',
           flagged: true,
-          estimated_minutes: 30
+          estimated_minutes: 30,
         };
 
         expect(taskWithOptions).toMatchObject({
@@ -174,7 +167,7 @@ describe('OmniFocus MCP Server', () => {
           due_date: expect.any(String),
           defer_date: expect.any(String),
           flagged: expect.any(Boolean),
-          estimated_minutes: expect.any(Number)
+          estimated_minutes: expect.any(Number),
         });
       });
     });
@@ -185,12 +178,12 @@ describe('OmniFocus MCP Server', () => {
           tasks: [
             { name: 'Task 1' },
             { name: 'Task 2', project: 'Project A' },
-            { name: 'Task 3', tags: ['urgent'] }
-          ]
+            { name: 'Task 3', tags: ['urgent'] },
+          ],
         };
 
         expect(batchTasks.tasks).toHaveLength(3);
-        batchTasks.tasks.forEach(task => {
+        batchTasks.tasks.forEach((task) => {
           expect(task).toHaveProperty('name');
         });
       });
@@ -200,7 +193,7 @@ describe('OmniFocus MCP Server', () => {
       test('should require task_id', () => {
         const updateData = {
           task_id: 'task-123',
-          name: 'Updated Task Name'
+          name: 'Updated Task Name',
         };
 
         expect(updateData).toHaveProperty('task_id');
@@ -217,10 +210,7 @@ describe('OmniFocus MCP Server', () => {
           note: 'Project description',
           folder: 'Work',
           sequential: true,
-          tasks: [
-            { name: 'Task 1' },
-            { name: 'Task 2' }
-          ]
+          tasks: [{ name: 'Task 1' }, { name: 'Task 2' }],
         };
 
         expect(project).toHaveProperty('name');
@@ -231,8 +221,8 @@ describe('OmniFocus MCP Server', () => {
     describe('getProjects', () => {
       test('should handle status filters', () => {
         const validStatuses = ['active', 'completed', 'dropped', 'all'];
-        
-        validStatuses.forEach(status => {
+
+        validStatuses.forEach((status) => {
           expect(validStatuses).toContain(status);
         });
       });
@@ -246,7 +236,7 @@ describe('OmniFocus MCP Server', () => {
           tasks: ['task-1', 'task-2'],
           target_project: 'New Project',
           add_tags: ['important'],
-          remove_tags: ['low-priority']
+          remove_tags: ['low-priority'],
         };
 
         expect(organizeData).toHaveProperty('tasks');
@@ -263,10 +253,10 @@ describe('OmniFocus MCP Server', () => {
           include_completed: false,
           date_range: {
             start: '2024-01-01',
-            end: '2024-12-31'
+            end: '2024-12-31',
           },
           projects: ['Work'],
-          tags: ['urgent']
+          tags: ['urgent'],
         };
 
         expect(searchParams).toHaveProperty('query');
@@ -278,12 +268,12 @@ describe('OmniFocus MCP Server', () => {
       test('should handle different periods', () => {
         const periods = ['today', 'week', 'month', 'year', 'all'];
         const groupByOptions = ['project', 'tag', 'none'];
-        
-        periods.forEach(period => {
+
+        periods.forEach((period) => {
           expect(periods).toContain(period);
         });
-        
-        groupByOptions.forEach(option => {
+
+        groupByOptions.forEach((option) => {
           expect(groupByOptions).toContain(option);
         });
       });
@@ -297,14 +287,16 @@ describe('OmniFocus MCP Server', () => {
             frequency: 'weekly',
             interval: 1,
             days_of_week: ['monday'],
-            repeat_from: 'due_date'
+            repeat_from: 'due_date',
           },
-          first_due_date: '2024-12-30'
+          first_due_date: '2024-12-30',
         };
 
         expect(recurringTask).toHaveProperty('repeat_rule');
         expect(recurringTask.repeat_rule).toHaveProperty('frequency');
-        expect(['daily', 'weekly', 'monthly', 'yearly']).toContain(recurringTask.repeat_rule.frequency);
+        expect(['daily', 'weekly', 'monthly', 'yearly']).toContain(
+          recurringTask.repeat_rule.frequency
+        );
       });
     });
 
@@ -313,7 +305,7 @@ describe('OmniFocus MCP Server', () => {
         const deferParams = {
           tasks: ['task-1', 'task-2'],
           defer_to: '2025-01-15',
-          adjust_due_dates: true
+          adjust_due_dates: true,
         };
 
         expect(deferParams).toHaveProperty('tasks');
@@ -327,7 +319,7 @@ describe('OmniFocus MCP Server', () => {
         const cleanupParams = {
           older_than_days: 30,
           action: 'archive',
-          dry_run: true
+          dry_run: true,
         };
 
         expect(cleanupParams).toHaveProperty('older_than_days');
@@ -339,8 +331,8 @@ describe('OmniFocus MCP Server', () => {
     describe('getOverdueTasks', () => {
       test('should validate grouping options', () => {
         const groupByOptions = ['project', 'days_overdue', 'priority', 'none'];
-        
-        groupByOptions.forEach(option => {
+
+        groupByOptions.forEach((option) => {
           expect(groupByOptions).toContain(option);
         });
       });
@@ -349,12 +341,12 @@ describe('OmniFocus MCP Server', () => {
     describe('Review Management', () => {
       test('should validate review parameters', () => {
         const reviewParams = {
-          review_interval_days: 7
+          review_interval_days: 7,
         };
 
         const markReviewedParams = {
           project_id: 'project-123',
-          notes: 'Review completed, all tasks on track'
+          notes: 'Review completed, all tasks on track',
         };
 
         expect(reviewParams).toHaveProperty('review_interval_days');
@@ -366,18 +358,16 @@ describe('OmniFocus MCP Server', () => {
   describe('Error Handling', () => {
     test('should handle invalid tool names gracefully', async () => {
       const { handleToolCall } = await import('../src/handlers/tool-handlers.js');
-      
-      await expect(handleToolCall('invalid_tool', {})).rejects.toThrow('Unknown tool: invalid_tool');
+
+      await expect(handleToolCall('invalid_tool', {})).rejects.toThrow(
+        'Unknown tool: invalid_tool'
+      );
     });
 
     test('should validate date formats', () => {
-      const validDates = [
-        '2024-12-31',
-        '2024-12-31T14:30:00',
-        '2024-12-31T14:30:00Z'
-      ];
+      const validDates = ['2024-12-31', '2024-12-31T14:30:00', '2024-12-31T14:30:00Z'];
 
-      validDates.forEach(date => {
+      validDates.forEach((date) => {
         expect(() => new Date(date)).not.toThrow();
       });
     });
@@ -385,10 +375,10 @@ describe('OmniFocus MCP Server', () => {
 
   describe('Script Escaping', () => {
     test('should properly escape quotes in scripts', () => {
-      const scriptWithQuotes = "test's script with \"quotes\"";
+      const scriptWithQuotes = 'test\'s script with "quotes"';
       const escaped = scriptWithQuotes.replace(/'/g, "'\"'\"'");
-      
-      expect(escaped).toBe("test'\"'\"'s script with \"quotes\"");
+
+      expect(escaped).toBe('test\'"\'"\'s script with "quotes"');
     });
   });
 });

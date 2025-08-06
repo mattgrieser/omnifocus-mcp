@@ -83,12 +83,12 @@ export class ProjectService {
 
     const result = await this.bridge.executeScript(script);
     const projectInfo = JSON.parse(result);
-    
+
     let message = `${projectInfo.message}: "${projectInfo.name}"`;
     if (projectInfo.taskCount > 0) {
       message += `\nAdded ${projectInfo.taskCount} task${projectInfo.taskCount !== 1 ? 's' : ''}: ${projectInfo.tasks.join(', ')}`;
     }
-    
+
     return {
       content: [
         {
@@ -133,7 +133,7 @@ export class ProjectService {
 
     const result = await this.bridge.executeScript(script);
     const projects = JSON.parse(result);
-    
+
     return {
       content: [
         {
@@ -166,7 +166,7 @@ export class ProjectService {
 
     const result = await this.bridge.executeScript(script);
     const tags = JSON.parse(result);
-    
+
     return {
       content: [
         {
@@ -245,7 +245,7 @@ export class ProjectService {
 
     const result = await this.bridge.executeScript(script);
     const projects = JSON.parse(result);
-    
+
     if (projects.length === 0) {
       return {
         content: [
@@ -256,27 +256,27 @@ export class ProjectService {
         ],
       };
     }
-    
+
     let output = `Found ${projects.length} project${projects.length !== 1 ? 's' : ''} for review:\n\n`;
-    
-    projects.forEach(project => {
+
+    projects.forEach((project) => {
       output += `${project.name}`;
       if (project.folder) output += ` (${project.folder})`;
       output += '\n';
-      
+
       if (project.lastReviewDate) {
         output += `  Last reviewed: ${project.daysSinceReview} days ago\n`;
       } else {
         output += `  Never reviewed\n`;
       }
-      
+
       output += `  Tasks: ${project.taskCounts.total} total, ${project.taskCounts.completed} completed`;
       if (project.taskCounts.overdue > 0) {
         output += `, ${project.taskCounts.overdue} overdue`;
       }
       output += '\n\n';
     });
-    
+
     return {
       content: [
         {
@@ -317,11 +317,11 @@ export class ProjectService {
 
     const result = await this.bridge.executeScript(script);
     const response = JSON.parse(result);
-    
+
     if (response.error) {
       throw new Error(response.error);
     }
-    
+
     return {
       content: [
         {

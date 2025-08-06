@@ -57,12 +57,12 @@ export class MaintenanceService {
 
     const result = await this.bridge.executeScript(script);
     const results = JSON.parse(result);
-    
+
     let output = `Found ${results.found} completed task${results.found !== 1 ? 's' : ''} older than ${args.older_than_days || 30} days\n`;
-    
+
     if (args.dry_run) {
       output += '\nDRY RUN - No changes made. Tasks that would be affected:\n';
-      results.tasks.forEach(task => {
+      results.tasks.forEach((task) => {
         output += `- ${task.name} (completed ${task.completed}, project: ${task.project})\n`;
       });
     } else {
@@ -73,7 +73,7 @@ export class MaintenanceService {
         output += ' (cleaned up)';
       }
     }
-    
+
     return {
       content: [
         {
@@ -131,7 +131,7 @@ export class MaintenanceService {
 
     const result = await this.bridge.executeScript(script);
     const tasks = JSON.parse(result);
-    
+
     if (tasks.length === 0) {
       return {
         content: [
@@ -142,48 +142,48 @@ export class MaintenanceService {
         ],
       };
     }
-    
+
     let output = `Found ${tasks.length} overdue task${tasks.length !== 1 ? 's' : ''}:\n\n`;
-    
+
     if (args.group_by === 'days_overdue') {
       const groups = {};
-      tasks.forEach(task => {
+      tasks.forEach((task) => {
         const key = task.daysOverdue === 1 ? '1 day' : `${task.daysOverdue} days`;
         if (!groups[key]) groups[key] = [];
         groups[key].push(task);
       });
-      
+
       Object.entries(groups).forEach(([days, taskList]) => {
         output += `Overdue by ${days}:\n`;
-        taskList.forEach(task => {
+        taskList.forEach((task) => {
           output += `  - ${task.name}${task.project ? ` (${task.project})` : ''}${task.flagged ? ' 🚩' : ''}\n`;
         });
         output += '\n';
       });
     } else if (args.group_by === 'project') {
       const groups = {};
-      tasks.forEach(task => {
+      tasks.forEach((task) => {
         const key = task.project || 'No Project';
         if (!groups[key]) groups[key] = [];
         groups[key].push(task);
       });
-      
+
       Object.entries(groups).forEach(([project, taskList]) => {
         output += `${project}:\n`;
-        taskList.forEach(task => {
+        taskList.forEach((task) => {
           output += `  - ${task.name} (${task.daysOverdue} day${task.daysOverdue !== 1 ? 's' : ''} overdue)${task.flagged ? ' 🚩' : ''}\n`;
         });
         output += '\n';
       });
     } else {
-      tasks.forEach(task => {
+      tasks.forEach((task) => {
         output += `- ${task.name} (${task.daysOverdue} day${task.daysOverdue !== 1 ? 's' : ''} overdue)`;
         if (task.project) output += ` - ${task.project}`;
         if (task.flagged) output += ' 🚩';
         output += '\n';
       });
     }
-    
+
     return {
       content: [
         {

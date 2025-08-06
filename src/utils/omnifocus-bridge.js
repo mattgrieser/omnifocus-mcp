@@ -21,9 +21,11 @@ export class OmniFocusBridge {
       
       ${script}
     `;
-    
+
     try {
-      const { stdout } = await execAsync(`osascript -l JavaScript -e '${fullScript.replace(/'/g, "'\"'\"'")}'`);
+      const { stdout } = await execAsync(
+        `osascript -l JavaScript -e '${fullScript.replace(/'/g, "'\"'\"'")}'`
+      );
       return stdout.trim();
     } catch (error) {
       throw new Error(`OmniFocus automation failed: ${error.message}`);

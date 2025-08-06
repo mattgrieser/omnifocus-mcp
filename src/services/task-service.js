@@ -77,7 +77,7 @@ export class TaskService {
 
     const result = await this.bridge.executeScript(script);
     const tasks = JSON.parse(result);
-    
+
     return {
       content: [
         {
@@ -151,7 +151,7 @@ export class TaskService {
 
     const result = await this.bridge.executeScript(script);
     const taskInfo = JSON.parse(result);
-    
+
     return {
       content: [
         {
@@ -167,7 +167,7 @@ export class TaskService {
    */
   async createTasksBatch(args) {
     const results = [];
-    
+
     for (const taskData of args.tasks) {
       try {
         await this.createTask(taskData);
@@ -176,7 +176,7 @@ export class TaskService {
         results.push(`✗ Failed to create "${taskData.name}": ${error.message}`);
       }
     }
-    
+
     return {
       content: [
         {
@@ -228,11 +228,11 @@ export class TaskService {
 
     const result = await this.bridge.executeScript(script);
     const response = JSON.parse(result);
-    
+
     if (response.error) {
       throw new Error(response.error);
     }
-    
+
     return {
       content: [
         {
@@ -263,11 +263,11 @@ export class TaskService {
 
     const result = await this.bridge.executeScript(script);
     const response = JSON.parse(result);
-    
+
     if (response.error) {
       throw new Error(response.error);
     }
-    
+
     return {
       content: [
         {
@@ -299,11 +299,11 @@ export class TaskService {
 
     const result = await this.bridge.executeScript(script);
     const response = JSON.parse(result);
-    
+
     if (response.error) {
       throw new Error(response.error);
     }
-    
+
     return {
       content: [
         {
@@ -378,7 +378,7 @@ export class TaskService {
 
     const result = await this.bridge.executeScript(script);
     const tasks = JSON.parse(result);
-    
+
     return {
       content: [
         {
@@ -469,7 +469,7 @@ export class TaskService {
 
     const result = await this.bridge.executeScript(script);
     const taskInfo = JSON.parse(result);
-    
+
     return {
       content: [
         {
@@ -518,7 +518,7 @@ export class TaskService {
 
     const result = await this.bridge.executeScript(script);
     const results = JSON.parse(result);
-    
+
     return {
       content: [
         {
@@ -595,7 +595,7 @@ export class TaskService {
 
     const result = await this.bridge.executeScript(script);
     const results = JSON.parse(result);
-    
+
     return {
       content: [
         {
