@@ -41,20 +41,20 @@ A Model Context Protocol (MCP) server for managing OmniFocus tasks and projects 
 
 ## Installation
 
-1. Clone this repository:
+### 1. Clone this repository
 
 ```bash
 git clone https://github.com/yourusername/omnifocus-mcp.git
 cd omnifocus-mcp
 ```
 
-2. Install dependencies:
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-3. Make the server executable:
+### 3. Make the server executable
 
 ```bash
 chmod +x src/index.js
