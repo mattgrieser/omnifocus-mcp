@@ -16,7 +16,9 @@ const removeEmojisFromTags = {
 //    - Rename tags if no conflict exists
 //    - Report back the changes made
 
+// eslint-disable-next-line no-console
 console.log('To remove emojis from all tag names:');
+// eslint-disable-next-line no-console
 console.log(JSON.stringify(removeEmojisFromTags, null, 2));
 
 export default removeEmojisFromTags;
