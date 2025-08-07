@@ -179,6 +179,22 @@ export class OmniFocusBridge {
       completedTaskCount: ${varName}.tasks().filter(function(t) { return t.completed(); }).length
     }`;
   }
+
+  /**
+   * Helper to format a folder object for output
+   * @param {string} varName - JavaScript variable name containing the folder
+   * @returns {string} - JavaScript code to format the folder
+   */
+  getFolderFormatterScript(varName = 'folder') {
+    return `{
+      id: ${varName}.id(),
+      name: ${varName}.name(),
+      note: ${varName}.note() || "",
+      status: ${varName}.status(),
+      projectCount: ${varName}.projects().length,
+      folderCount: ${varName}.folders().length
+    }`;
+  }
 }
 
 export default new OmniFocusBridge();

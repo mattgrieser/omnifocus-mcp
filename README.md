@@ -18,6 +18,13 @@ A Model Context Protocol (MCP) server for managing OmniFocus tasks and projects 
   - Support for sequential and parallel projects
   - Project review tracking and management
 
+- **Folder Management**
+  - List folders with filtering by status
+  - Create new folders with optional parent folders
+  - Update folder names
+  - Remove emojis from folder names in bulk
+  - Delete folders
+
 - **Organization & Productivity**
   - Bulk organize tasks by moving them to projects
   - Add or remove tags from multiple tasks at once
@@ -146,6 +153,36 @@ Make it sequential so tasks must be done in order.
 Use the get_projects tool to show me all active projects in the "Work" folder
 
 Use the get_projects tool to show me all completed projects
+```
+
+### Folder Operations
+
+**List folders:**
+
+```bash
+Use the get_folders tool to show me all active folders
+
+Use the get_folders tool to show me all folders including completed ones
+```
+
+**Create a folder:**
+
+```bash
+Use the create_folder tool to create a folder called "New Projects" with the note "Projects that need to be organized"
+```
+
+**Update folder names:**
+
+```bash
+Use the update_folder_name tool to rename the folder "Old Name" to "New Name"
+```
+
+**Remove emojis from folder names:**
+
+```bash
+Use the remove_emojis_from_folder_names tool with dry_run true to see which folders would be renamed
+
+Use the remove_emojis_from_folder_names tool to remove all emojis from folder names
 ```
 
 ### Organization
@@ -422,6 +459,49 @@ Parameters:
 
 - `project_id` (string, required): Project name or ID to mark as reviewed
 - `notes` (string, optional): Review notes to add to project
+
+### get_folders
+
+Get all folders from OmniFocus with optional filtering.
+
+Parameters:
+
+- `status` (string, optional): Filter by status - "active", "completed", "dropped", or "all" (default: "active")
+
+### update_folder_name
+
+Update a folder's name.
+
+Parameters:
+
+- `folder_id` (string, required): Folder ID or name to update
+- `name` (string, required): New folder name
+
+### remove_emojis_from_folder_names
+
+Remove emojis from all folder names in OmniFocus. This tool is useful for cleaning up folder names that contain emojis and standardizing folder naming conventions.
+
+Parameters:
+
+- `dry_run` (boolean, optional): Preview changes without making them (default: false)
+
+### create_folder
+
+Create a new folder in OmniFocus.
+
+Parameters:
+
+- `name` (string, required): Folder name
+- `note` (string, optional): Folder description
+- `parent_folder` (string, optional): Parent folder name or ID
+
+### delete_folder
+
+Delete a folder from OmniFocus.
+
+Parameters:
+
+- `folder_id` (string, required): Folder ID or name to delete
 
 ## Requirements
 

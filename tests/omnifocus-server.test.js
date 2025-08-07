@@ -19,7 +19,7 @@ describe('OmniFocus MCP Server', () => {
     test('should export tools array', async () => {
       const { tools } = await import('../src/handlers/tool-handlers.js');
       expect(Array.isArray(tools)).toBe(true);
-      expect(tools.length).toBe(19);
+      expect(tools.length).toBe(24);
     });
 
     test('should have all expected tools', async () => {
@@ -46,6 +46,11 @@ describe('OmniFocus MCP Server', () => {
         'get_overdue_tasks',
         'get_projects_for_review',
         'mark_project_reviewed',
+        'get_folders',
+        'update_folder_name',
+        'remove_emojis_from_folder_names',
+        'create_folder',
+        'delete_folder',
       ];
 
       expectedTools.forEach((toolName) => {

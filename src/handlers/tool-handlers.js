@@ -2,6 +2,7 @@ import taskService from '../services/task-service.js';
 import projectService from '../services/project-service.js';
 import statisticsService from '../services/statistics-service.js';
 import maintenanceService from '../services/maintenance-service.js';
+import folderService from '../services/folder-service.js';
 
 /**
  * Tool definitions for the MCP server
@@ -543,6 +544,89 @@ export const tools = [
       required: ['project_id'],
     },
   },
+  {
+    name: 'get_folders',
+    description: 'Get all folders from OmniFocus with optional filtering',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['active', 'completed', 'dropped', 'all'],
+          description: 'Filter by folder status',
+          default: 'active',
+        },
+      },
+    },
+  },
+  {
+    name: 'update_folder_name',
+    description: 'Update a folder name',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        folder_id: {
+          type: 'string',
+          description: 'Folder ID or name to update',
+        },
+        name: {
+          type: 'string',
+          description: 'New folder name',
+        },
+      },
+      required: ['folder_id', 'name'],
+    },
+  },
+  {
+    name: 'remove_emojis_from_folder_names',
+    description: 'Remove emojis from all folder names in OmniFocus',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        dry_run: {
+          type: 'boolean',
+          description: 'Preview changes without making them',
+          default: false,
+        },
+      },
+    },
+  },
+  {
+    name: 'create_folder',
+    description: 'Create a new folder in OmniFocus',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Folder name',
+        },
+        note: {
+          type: 'string',
+          description: 'Folder description',
+        },
+        parent_folder: {
+          type: 'string',
+          description: 'Parent folder name or ID',
+        },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'delete_folder',
+    description: 'Delete a folder from OmniFocus',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        folder_id: {
+          type: 'string',
+          description: 'Folder ID or name to delete',
+        },
+      },
+      required: ['folder_id'],
+    },
+  },
 ];
 
 /**
@@ -595,6 +679,18 @@ export async function handleToolCall(name, args) {
       return await maintenanceService.cleanupCompleted(args);
     case 'get_overdue_tasks':
       return await maintenanceService.getOverdueTasks(args);
+
+    // Folder operations
+    case 'get_folders':
+      return await folderService.getFolders(args);
+    case 'update_folder_name':
+      return await folderService.updateFolderName(args);
+    case 'remove_emojis_from_folder_names':
+      return await folderService.removeEmojisFromFolderNames(args);
+    case 'create_folder':
+      return await folderService.createFolder(args);
+    case 'delete_folder':
+      return await folderService.deleteFolder(args);
 
     default:
       throw new Error(`Unknown tool: ${name}`);
