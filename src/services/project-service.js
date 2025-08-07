@@ -180,8 +180,15 @@ export class ProjectService {
   /**
    * Update tag names to remove emojis
    */
-  async updateTagNames() {
+  async updateTagNames(args = {}) {
+    const { dry_run = false } = args;
+
     const script = `
+      function removeEmojis(text) {
+        // Remove emoji characters (Unicode ranges for emojis)
+        return text.replace(/[\\u{1F600}-\\u{1F64F}]|[\\u{1F300}-\\u{1F5FF}]|[\\u{1F680}-\\u{1F6FF}]|[\\u{1F1E0}-\\u{1F1FF}]|[\\u{2600}-\\u{26FF}]|[\\u{2700}-\\u{27BF}]|[\\u{1F900}-\\u{1F9FF}]|[\\u{1F018}-\\u{1F270}]|[\\u{238C}-\\u{2454}]|[\\u{20D0}-\\u{20FF}]|[\\u{FE00}-\\u{FE0F}]|[\\u{1F900}-\\u{1F9FF}]|[\\u{1F018}-\\u{1F270}]|[\\u{238C}-\\u{2454}]|[\\u{20D0}-\\u{20FF}]|[\\u{FE00}-\\u{FE0F}]/gu, '').trim();
+      }
+      
       var tags = doc.flattenedTags();
       var results = [];
       var updatedCount = 0;
@@ -189,7 +196,7 @@ export class ProjectService {
       for (var i = 0; i < tags.length; i++) {
         var tag = tags[i];
         var originalName = tag.name();
-        var newName = originalName.replace(/[^\\x00-\\x7F]/g, '').trim();
+        var newName = removeEmojis(originalName);
         
         if (newName !== originalName && newName.length > 0) {
           var existingTag = null;
@@ -200,18 +207,26 @@ export class ProjectService {
             }
           }
           
-          if (existingTag) {
-            var tasks = tag.tasks();
-            for (var k = 0; k < tasks.length; k++) {
-              var task = tasks[k];
-              task.addTag(existingTag);
-              task.removeTag(tag);
+          if (!${dry_run}) {
+            if (existingTag) {
+              var tasks = tag.tasks();
+              for (var k = 0; k < tasks.length; k++) {
+                var task = tasks[k];
+                task.addTag(existingTag);
+                task.removeTag(tag);
+              }
+              tag.delete();
+              results.push("Merged tag '" + originalName + "' into existing tag '" + newName + "'");
+            } else {
+              tag.name = newName;
+              results.push("Renamed tag '" + originalName + "' to '" + newName + "'");
             }
-            tag.delete();
-            results.push("Merged tag '" + originalName + "' into existing tag '" + newName + "'");
           } else {
-            tag.name = newName;
-            results.push("Renamed tag '" + originalName + "' to '" + newName + "'");
+            if (existingTag) {
+              results.push("Would merge tag '" + originalName + "' into existing tag '" + newName + "'");
+            } else {
+              results.push("Would rename tag '" + originalName + "' to '" + newName + "'");
+            }
           }
           updatedCount++;
         }
@@ -219,7 +234,8 @@ export class ProjectService {
       
       JSON.stringify({
         updatedCount: updatedCount,
-        results: results
+        results: results,
+        dryRun: ${dry_run}
       });
     `;
 

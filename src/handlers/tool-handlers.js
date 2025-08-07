@@ -261,10 +261,17 @@ export const tools = [
   },
   {
     name: 'update_tag_names',
-    description: 'Remove emojis from all active tag names in OmniFocus',
+    description:
+      'Remove emojis from all active tag names in OmniFocus. If a tag with the same name (without emojis) already exists, the emoji tag will be merged into the existing tag. Otherwise, the tag will be renamed.',
     inputSchema: {
       type: 'object',
-      properties: {},
+      properties: {
+        dry_run: {
+          type: 'boolean',
+          description: 'Preview changes without making them',
+          default: false,
+        },
+      },
     },
   },
   {
@@ -664,7 +671,7 @@ export async function handleToolCall(name, args) {
     case 'get_tags':
       return await projectService.getTags();
     case 'update_tag_names':
-      return await projectService.updateTagNames();
+      return await projectService.updateTagNames(args);
     case 'get_projects_for_review':
       return await projectService.getProjectsForReview(args);
     case 'mark_project_reviewed':

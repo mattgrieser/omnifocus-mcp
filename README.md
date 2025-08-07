@@ -202,7 +202,9 @@ Use the get_tags tool to show me all available tags
 **Remove emojis from tag names:**
 
 ```bash
-Use the update_tag_names tool to remove emojis from all active tag names in OmniFocus
+Use the update_tag_names tool with dry_run true to see which tags would be renamed
+
+Use the update_tag_names tool to remove all emojis from tag names
 ```
 
 ### Advanced Search & Analytics
@@ -366,6 +368,10 @@ Lists all available tags in OmniFocus.
 Removes emoji characters from all active tag names in OmniFocus. If a tag with the same name (without emojis) already exists, the emoji tag will be merged into the existing tag. Otherwise, the tag will be renamed.
 
 This tool is useful for cleaning up tag names that contain emojis and standardizing tag naming conventions.
+
+Parameters:
+
+- `dry_run` (boolean, optional): Preview changes without making them (default: false)
 
 ### organize_tasks
 
