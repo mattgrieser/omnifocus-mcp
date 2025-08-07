@@ -140,10 +140,11 @@ export class TaskService {
       script += `task.deferDate = new Date(${JSON.stringify(args.defer_date)});\n`;
     }
 
-    // Add tags with proper variable handling
+    // Note: Tag assignment is not supported in OmniFocus JavaScript automation
+    // Tags will need to be added manually in OmniFocus
     if (args.tags && args.tags.length > 0) {
       script += `
-        // Add tags
+        // Create tags for manual assignment later
         var tagNames = ${JSON.stringify(args.tags)};
         for (var i = 0; i < tagNames.length; i++) {
           var currentTagName = tagNames[i];
@@ -161,7 +162,7 @@ export class TaskService {
             tag = app.Tag({name: currentTagName});
             doc.tags.push(tag);
           }
-          task.addTag(tag);
+          // Note: task.addTag(tag) is not supported in OmniFocus JavaScript automation
         }
       `;
     }
@@ -177,11 +178,18 @@ export class TaskService {
     const result = await this.bridge.executeScript(script);
     const taskInfo = JSON.parse(result);
 
+    let responseText = taskInfo.message + `: "${taskInfo.name}"`;
+
+    // Add note about tag limitation if tags were requested
+    if (args.tags && args.tags.length > 0) {
+      responseText += `\n\nNote: Tags (${args.tags.join(', ')}) were created but not assigned to the task due to OmniFocus JavaScript automation limitations. Please manually assign tags in OmniFocus.`;
+    }
+
     return {
       content: [
         {
           type: 'text',
-          text: taskInfo.message + `: "${taskInfo.name}"`,
+          text: responseText,
         },
       ],
     };
@@ -486,30 +494,31 @@ export class TaskService {
       script += `doc.inboxTasks.push(task);\n`;
     }
 
-    // Add tags with proper variable handling
+    // Note: Tag assignment is not supported in OmniFocus JavaScript automation
+    // Tags will need to be added manually in OmniFocus
     if (args.tags && args.tags.length > 0) {
       script += `
-        // Add tags
-        var tagNames = ${JSON.stringify(args.tags)};
-        for (var j = 0; j < tagNames.length; j++) {
-          var currentTagName = tagNames[j];
-          var tags = doc.flattenedTags();
-          var tag = null;
-          
-          for (var k = 0; k < tags.length; k++) {
-            if (tags[k].name() === currentTagName) {
-              tag = tags[k];
-              break;
+          // Create tags for manual assignment later
+          var tagNames = ${JSON.stringify(args.tags)};
+          for (var j = 0; j < tagNames.length; j++) {
+            var currentTagName = tagNames[j];
+            var tags = doc.flattenedTags();
+            var tag = null;
+            
+            for (var k = 0; k < tags.length; k++) {
+              if (tags[k].name() === currentTagName) {
+                tag = tags[k];
+                break;
+              }
             }
+            
+            if (!tag) {
+              tag = app.Tag({name: currentTagName});
+              doc.tags.push(tag);
+            }
+            // Note: task.addTag(tag) is not supported in OmniFocus JavaScript automation
           }
-          
-          if (!tag) {
-            tag = app.Tag({name: currentTagName});
-            doc.tags.push(tag);
-          }
-          task.addTag(tag);
-        }
-      `;
+        `;
     }
 
     script += `
@@ -523,11 +532,18 @@ export class TaskService {
     const result = await this.bridge.executeScript(script);
     const taskInfo = JSON.parse(result);
 
+    let responseText = `${taskInfo.message}: "${taskInfo.name}" (${args.repeat_rule.frequency})`;
+
+    // Add note about tag limitation if tags were requested
+    if (args.tags && args.tags.length > 0) {
+      responseText += `\n\nNote: Tags (${args.tags.join(', ')}) were created but not assigned to the task due to OmniFocus JavaScript automation limitations. Please manually assign tags in OmniFocus.`;
+    }
+
     return {
       content: [
         {
           type: 'text',
-          text: `${taskInfo.message}: "${taskInfo.name}" (${args.repeat_rule.frequency})`,
+          text: responseText,
         },
       ],
     };
@@ -617,31 +633,31 @@ export class TaskService {
       `;
     }
 
-    // Add tags
+    // Note: Tag assignment is not supported in OmniFocus JavaScript automation
     if (args.add_tags && args.add_tags.length > 0) {
       script += `
-        // Add tags
-        var addTags = ${JSON.stringify(args.add_tags)};
-        for (var l = 0; l < addTags.length; l++) {
-          var currentAddTag = addTags[l];
-          var tags = doc.flattenedTags();
-          var tag = null;
-          
-          for (var m = 0; m < tags.length; m++) {
-            if (tags[m].name() === currentAddTag) {
-              tag = tags[m];
-              break;
+            // Create tags for manual assignment later
+            var addTags = ${JSON.stringify(args.add_tags)};
+            for (var l = 0; l < addTags.length; l++) {
+              var currentAddTag = addTags[l];
+              var tags = doc.flattenedTags();
+              var tag = null;
+              
+              for (var m = 0; m < tags.length; m++) {
+                if (tags[m].name() === currentAddTag) {
+                  tag = tags[m];
+                  break;
+                }
+              }
+              
+              if (!tag) {
+                tag = app.Tag({name: currentAddTag});
+                doc.tags.push(tag);
+              }
+              // Note: task.addTag(tag) is not supported in OmniFocus JavaScript automation
+              actions.push("created tag: " + currentAddTag + " (manual assignment required)");
             }
-          }
-          
-          if (!tag) {
-            tag = app.Tag({name: currentAddTag});
-            doc.tags.push(tag);
-          }
-          task.addTag(tag);
-          actions.push("added tag: " + currentAddTag);
-        }
-      `;
+          `;
     }
 
     // Remove tags

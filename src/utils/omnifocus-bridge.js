@@ -14,7 +14,13 @@ export class OmniFocusBridge {
    * @returns {Promise<string>} - Script output
    */
   async executeScript(script) {
-    const fullScript = `
+    // Check if script already includes the wrapper
+    const hasWrapper =
+      script.includes('var app = Application') && script.includes('var doc = app.defaultDocument');
+
+    const fullScript = hasWrapper
+      ? script
+      : `
       var app = Application('OmniFocus');
       app.includeStandardAdditions = true;
       var doc = app.defaultDocument;
