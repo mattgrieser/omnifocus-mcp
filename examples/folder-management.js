@@ -6,27 +6,21 @@
  */
 
 // Example 1: List all folders
-console.log('=== Listing All Folders ===');
 // Use the get_folders tool to show me all active folders
 
 // Example 2: Create a new folder
-console.log('=== Creating a New Folder ===');
 // Use the create_folder tool to create a folder called "Archive" with the note "Completed projects and old tasks"
 
 // Example 3: Update folder name
-console.log('=== Updating Folder Name ===');
 // Use the update_folder_name tool to rename the folder "Work" to "Professional"
 
 // Example 4: Remove emojis from folder names (dry run)
-console.log('=== Removing Emojis from Folder Names (Preview) ===');
 // Use the remove_emojis_from_folder_names tool with dry_run true to see which folders would be renamed
 
 // Example 5: Remove emojis from folder names (actual)
-console.log('=== Removing Emojis from Folder Names (Actual) ===');
 // Use the remove_emojis_from_folder_names tool to remove all emojis from folder names
 
 // Example 6: Delete a folder
-console.log('=== Deleting a Folder ===');
 // Use the delete_folder tool to delete the folder "Test Folder"
 
 /**
