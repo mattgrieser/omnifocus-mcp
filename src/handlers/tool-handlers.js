@@ -259,6 +259,14 @@ export const tools = [
     },
   },
   {
+    name: 'update_tag_names',
+    description: 'Remove emojis from all active tag names in OmniFocus',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
     name: 'organize_tasks',
     description: 'Bulk organize tasks by moving to projects or adding tags',
     inputSchema: {
@@ -571,6 +579,8 @@ export async function handleToolCall(name, args) {
       return await projectService.getProjects(args);
     case 'get_tags':
       return await projectService.getTags();
+    case 'update_tag_names':
+      return await projectService.updateTagNames();
     case 'get_projects_for_review':
       return await projectService.getProjectsForReview(args);
     case 'mark_project_reviewed':

@@ -19,7 +19,7 @@ describe('OmniFocus MCP Server', () => {
     test('should export tools array', async () => {
       const { tools } = await import('../src/handlers/tool-handlers.js');
       expect(Array.isArray(tools)).toBe(true);
-      expect(tools.length).toBe(18);
+      expect(tools.length).toBe(19);
     });
 
     test('should have all expected tools', async () => {
@@ -36,6 +36,7 @@ describe('OmniFocus MCP Server', () => {
         'create_project',
         'get_projects',
         'get_tags',
+        'update_tag_names',
         'organize_tasks',
         'search_tasks',
         'get_statistics',
@@ -379,6 +380,21 @@ describe('OmniFocus MCP Server', () => {
       const escaped = scriptWithQuotes.replace(/'/g, "'\"'\"'");
 
       expect(escaped).toBe('test\'"\'"\'s script with "quotes"');
+    });
+  });
+
+  describe('Tag Operations', () => {
+    test('should get tags', async () => {
+      const { handleToolCall } = await import('../src/handlers/tool-handlers.js');
+      const result = await handleToolCall('get_tags', {});
+      expect(result.content[0].text).toContain('Found');
+    });
+
+    test('should have update_tag_names tool available', async () => {
+      const { tools } = await import('../src/handlers/tool-handlers.js');
+      const updateTagNamesTool = tools.find((tool) => tool.name === 'update_tag_names');
+      expect(updateTagNamesTool).toBeDefined();
+      expect(updateTagNamesTool.description).toContain('Remove emojis');
     });
   });
 });

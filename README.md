@@ -162,6 +162,12 @@ Use the organize_tasks tool to move tasks ["Task 1", "Task 2", "Task 3"] to the 
 Use the get_tags tool to show me all available tags
 ```
 
+**Remove emojis from tag names:**
+
+```bash
+Use the update_tag_names tool to remove emojis from all active tag names in OmniFocus
+```
+
 ### Advanced Search & Analytics
 
 **Search for tasks:**
@@ -317,6 +323,12 @@ Parameters:
 ### get_tags
 
 Lists all available tags in OmniFocus.
+
+### update_tag_names
+
+Removes emoji characters from all active tag names in OmniFocus. If a tag with the same name (without emojis) already exists, the emoji tag will be merged into the existing tag. Otherwise, the tag will be renamed.
+
+This tool is useful for cleaning up tag names that contain emojis and standardizing tag naming conventions.
 
 ### organize_tasks
 

@@ -178,6 +178,65 @@ export class ProjectService {
   }
 
   /**
+   * Update tag names to remove emojis
+   */
+  async updateTagNames() {
+    const script = `
+      var tags = doc.flattenedTags();
+      var results = [];
+      var updatedCount = 0;
+      
+      for (var i = 0; i < tags.length; i++) {
+        var tag = tags[i];
+        var originalName = tag.name();
+        var newName = originalName.replace(/[^\\x00-\\x7F]/g, '').trim();
+        
+        if (newName !== originalName && newName.length > 0) {
+          var existingTag = null;
+          for (var j = 0; j < tags.length; j++) {
+            if (i !== j && tags[j].name() === newName) {
+              existingTag = tags[j];
+              break;
+            }
+          }
+          
+          if (existingTag) {
+            var tasks = tag.tasks();
+            for (var k = 0; k < tasks.length; k++) {
+              var task = tasks[k];
+              task.addTag(existingTag);
+              task.removeTag(tag);
+            }
+            tag.delete();
+            results.push("Merged tag '" + originalName + "' into existing tag '" + newName + "'");
+          } else {
+            tag.name = newName;
+            results.push("Renamed tag '" + originalName + "' to '" + newName + "'");
+          }
+          updatedCount++;
+        }
+      }
+      
+      JSON.stringify({
+        updatedCount: updatedCount,
+        results: results
+      });
+    `;
+
+    const result = await this.bridge.executeScript(script);
+    const response = JSON.parse(result);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Updated ${response.updatedCount} tag${response.updatedCount !== 1 ? 's' : ''}:\n${response.results.join('\n')}`,
+        },
+      ],
+    };
+  }
+
+  /**
    * Get projects that need review
    */
   async getProjectsForReview(args) {

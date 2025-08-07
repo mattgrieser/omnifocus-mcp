@@ -145,6 +145,12 @@ const getFlaggedWorkTasks = {
   },
 };
 
+// Example 11: Remove emojis from all active tag names
+const removeEmojisFromTags = {
+  tool: 'update_tag_names',
+  arguments: {},
+};
+
 export default {
   getTasksDueToday,
   createSimpleTask,
@@ -156,4 +162,5 @@ export default {
   getWorkProjects,
   completeTask,
   getFlaggedWorkTasks,
+  removeEmojisFromTags,
 };
