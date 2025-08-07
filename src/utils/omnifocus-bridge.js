@@ -21,12 +21,12 @@ export class OmniFocusBridge {
     const fullScript = hasWrapper
       ? script
       : `
-      var app = Application('OmniFocus');
-      app.includeStandardAdditions = true;
-      var doc = app.defaultDocument;
-      
-      ${script}
-    `;
+        var app = Application('OmniFocus');
+        app.includeStandardAdditions = true;
+        var doc = app.defaultDocument;
+        
+        ${script}
+      `;
 
     try {
       const { stdout } = await execAsync(
@@ -35,6 +35,43 @@ export class OmniFocusBridge {
       return stdout.trim();
     } catch (error) {
       throw new Error(`OmniFocus automation failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Execute JavaScript code and safely parse JSON response
+   * @param {string} script - JavaScript code to execute
+   * @returns {Promise<object>} - Parsed JSON response
+   */
+  async executeScriptAndParse(script) {
+    const result = await this.executeScript(script);
+
+    try {
+      return JSON.parse(result);
+    } catch (error) {
+      throw new Error(
+        `Failed to parse OmniFocus response: ${error.message}. Raw response: ${result}`
+      );
+    }
+  }
+
+  /**
+   * Check if OmniFocus is available and accessible
+   * @returns {Promise<boolean>} - True if OmniFocus is available
+   */
+  async isOmniFocusAvailable() {
+    try {
+      const script = `
+        var app = Application('OmniFocus');
+        app.includeStandardAdditions = true;
+        var doc = app.defaultDocument;
+        JSON.stringify({available: true, version: app.version()});
+      `;
+
+      await this.executeScript(script);
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 

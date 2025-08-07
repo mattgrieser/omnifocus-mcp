@@ -9,190 +9,301 @@ export class TaskService {
   }
 
   /**
+   * Validate date format (YYYY-MM-DD)
+   * @param {string} dateString - Date string to validate
+   * @returns {boolean} - True if valid date format
+   */
+  isValidDate(dateString) {
+    if (typeof dateString !== 'string') return false;
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(dateString)) return false;
+
+    const date = new Date(dateString);
+    return (
+      date instanceof Date &&
+      !isNaN(date.getTime()) &&
+      date.toISOString().slice(0, 10) === dateString
+    );
+  }
+
+  /**
+   * Sanitize string input to prevent script injection
+   * @param {string} input - Input string to sanitize
+   * @returns {string} - Sanitized string
+   */
+  sanitizeString(input) {
+    if (typeof input !== 'string') return '';
+
+    // Remove any potentially dangerous characters
+    return input
+      .replace(/[<>]/g, '') // Remove < and >
+      .replace(/javascript:/gi, '') // Remove javascript: protocol
+      .trim();
+  }
+
+  /**
+   * Check if OmniFocus is available
+   * @returns {Promise<boolean>} - True if OmniFocus is available
+   */
+  async isOmniFocusAvailable() {
+    return await this.bridge.isOmniFocusAvailable();
+  }
+
+  /**
    * Get tasks with optional filtering
    */
   async getTasks(args) {
-    const script = `
-      var tasks = doc.flattenedTasks();
-      var result = [];
-      
-      for (var i = 0; i < tasks.length; i++) {
-        var task = tasks[i];
+    try {
+      const script = `
+        var tasks = doc.flattenedTasks();
+        var result = [];
         
-        // Apply filters
-        if (!${args.completed || false} && task.completed()) continue;
-        if (${args.completed || false} && !task.completed()) continue;
-        
-        var taskInfo = ${this.bridge.getTaskFormatterScript('task')};
-        
-        // Apply additional filters
-        var include = true;
-        
-        if (${JSON.stringify(args.project || null)} && taskInfo.project !== ${JSON.stringify(args.project || null)}) {
-          include = false;
-        }
-        
-        if (${args.flagged || false} && !taskInfo.flagged) {
-          include = false;
-        }
-        
-        if (${JSON.stringify(args.tag || null)} && !taskInfo.tags.includes(${JSON.stringify(args.tag || null)})) {
-          include = false;
-        }
-        
-        if (${args.due_today || false}) {
-          if (!taskInfo.dueDate) {
+        for (var i = 0; i < tasks.length; i++) {
+          var task = tasks[i];
+          
+          // Apply filters
+          if (!${args.completed || false} && task.completed()) continue;
+          if (${args.completed || false} && !task.completed()) continue;
+          
+          var taskInfo = ${this.bridge.getTaskFormatterScript('task')};
+          
+          // Apply additional filters
+          var include = true;
+          
+          if (${JSON.stringify(args.project || null)} && taskInfo.project !== ${JSON.stringify(args.project || null)}) {
             include = false;
-          } else {
-            var today = new Date();
-            today.setHours(0,0,0,0);
-            var tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            var dueDate = new Date(taskInfo.dueDate);
-            if (dueDate < today || dueDate >= tomorrow) {
+          }
+          
+          if (${args.flagged || false} && !taskInfo.flagged) {
+            include = false;
+          }
+          
+          if (${JSON.stringify(args.tag || null)} && !taskInfo.tags.includes(${JSON.stringify(args.tag || null)})) {
+            include = false;
+          }
+          
+          if (${args.due_today || false}) {
+            if (!taskInfo.dueDate) {
               include = false;
+            } else {
+              var today = new Date();
+              today.setHours(0,0,0,0);
+              var tomorrow = new Date(today);
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              var dueDate = new Date(taskInfo.dueDate);
+              if (dueDate < today || dueDate >= tomorrow) {
+                include = false;
+              }
             }
+          }
+          
+          if (${args.due_soon || false}) {
+            if (!taskInfo.dueDate) {
+              include = false;
+            } else {
+              var weekFromNow = new Date();
+              weekFromNow.setDate(weekFromNow.getDate() + 7);
+              if (new Date(taskInfo.dueDate) > weekFromNow) {
+                include = false;
+              }
+            }
+          }
+          
+          if (include) {
+            result.push(taskInfo);
           }
         }
         
-        if (${args.due_soon || false}) {
-          if (!taskInfo.dueDate) {
-            include = false;
-          } else {
-            var weekFromNow = new Date();
-            weekFromNow.setDate(weekFromNow.getDate() + 7);
-            if (new Date(taskInfo.dueDate) > weekFromNow) {
-              include = false;
-            }
-          }
-        }
-        
-        if (include) {
-          result.push(taskInfo);
-        }
+        JSON.stringify(result);
+      `;
+
+      const result = await this.bridge.executeScript(script);
+
+      // Handle potential JSON parsing errors
+      let tasks;
+      try {
+        tasks = JSON.parse(result);
+      } catch (error) {
+        throw new Error(
+          `Failed to parse OmniFocus response: ${error.message}. Raw response: ${result}`
+        );
       }
-      
-      JSON.stringify(result);
-    `;
 
-    const result = await this.bridge.executeScript(script);
-    const tasks = JSON.parse(result);
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Found ${tasks.length} task${tasks.length !== 1 ? 's' : ''}:\n${JSON.stringify(tasks, null, 2)}`,
-        },
-      ],
-    };
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Found ${tasks.length} task${tasks.length !== 1 ? 's' : ''}:\n${JSON.stringify(tasks, null, 2)}`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error retrieving tasks: ${error.message}`,
+          },
+        ],
+      };
+    }
   }
 
   /**
    * Create a new task
    */
   async createTask(args) {
-    // Build the script with proper variable handling
-    let script = `
-      var task;
-    `;
+    try {
+      // Check if OmniFocus is available
+      const isAvailable = await this.isOmniFocusAvailable();
+      if (!isAvailable) {
+        throw new Error(
+          'OmniFocus is not available. Please make sure OmniFocus is running and accessible.'
+        );
+      }
 
-    // Add to project or inbox
-    if (args.project) {
-      script += `
-        ${this.bridge.getFindProjectScript(args.project)}
-        
-        if (!project) {
-          // Create the project if it doesn't exist
-          project = app.Project({name: ${JSON.stringify(args.project)}});
-          doc.projects.push(project);
-        }
-        
-        task = app.Task({name: ${JSON.stringify(args.name)}});
-        project.tasks.push(task);
+      // Validate required arguments
+      if (!args.name || typeof args.name !== 'string' || args.name.trim() === '') {
+        throw new Error('Task name is required and must be a non-empty string');
+      }
+
+      // Validate optional arguments
+      if (
+        args.estimated_minutes &&
+        (typeof args.estimated_minutes !== 'number' || args.estimated_minutes < 0)
+      ) {
+        throw new Error('Estimated minutes must be a positive number');
+      }
+
+      if (args.due_date && !this.isValidDate(args.due_date)) {
+        throw new Error('Invalid due date format. Use YYYY-MM-DD format');
+      }
+
+      if (args.defer_date && !this.isValidDate(args.defer_date)) {
+        throw new Error('Invalid defer date format. Use YYYY-MM-DD format');
+      }
+
+      // Build the script with proper variable handling
+      let script = `
+        var task;
       `;
-    } else {
-      script += `
-        // Add to inbox
-        task = app.Task({name: ${JSON.stringify(args.name)}});
-        doc.inboxTasks.push(task);
-      `;
-    }
 
-    // Set task properties
-    if (args.note) {
-      script += `task.note = ${JSON.stringify(args.note)};\n`;
-    }
-
-    if (args.flagged) {
-      script += `task.flagged = true;\n`;
-    }
-
-    if (args.estimated_minutes) {
-      script += `task.estimatedMinutes = ${args.estimated_minutes};\n`;
-    }
-
-    if (args.due_date) {
-      script += `task.dueDate = new Date(${JSON.stringify(args.due_date)});\n`;
-    }
-
-    if (args.defer_date) {
-      script += `task.deferDate = new Date(${JSON.stringify(args.defer_date)});\n`;
-    }
-
-    // Note: Tag assignment is not supported in OmniFocus JavaScript automation
-    // Tags will need to be added manually in OmniFocus
-    if (args.tags && args.tags.length > 0) {
-      script += `
-        // Create tags for manual assignment later
-        var tagNames = ${JSON.stringify(args.tags)};
-        for (var i = 0; i < tagNames.length; i++) {
-          var currentTagName = tagNames[i];
-          var tags = doc.flattenedTags();
-          var tag = null;
+      // Add to project or inbox
+      if (args.project) {
+        script += `
+          ${this.bridge.getFindProjectScript(args.project)}
           
-          for (var j = 0; j < tags.length; j++) {
-            if (tags[j].name() === currentTagName) {
-              tag = tags[j];
-              break;
+          if (!project) {
+            // Create the project if it doesn't exist
+            project = app.Project({name: ${JSON.stringify(args.project)}});
+            doc.projects.push(project);
+          }
+          
+          task = app.Task({name: ${JSON.stringify(args.name.trim())}});
+          project.tasks.push(task);
+        `;
+      } else {
+        script += `
+          // Add to inbox
+          task = app.Task({name: ${JSON.stringify(args.name.trim())}});
+          doc.inboxTasks.push(task);
+        `;
+      }
+
+      // Set task properties
+      if (args.note) {
+        script += `task.note = ${JSON.stringify(args.note)};\n`;
+      }
+
+      if (args.flagged) {
+        script += `task.flagged = true;\n`;
+      }
+
+      if (args.estimated_minutes) {
+        script += `task.estimatedMinutes = ${args.estimated_minutes};\n`;
+      }
+
+      if (args.due_date) {
+        script += `task.dueDate = new Date(${JSON.stringify(args.due_date)});\n`;
+      }
+
+      if (args.defer_date) {
+        script += `task.deferDate = new Date(${JSON.stringify(args.defer_date)});\n`;
+      }
+
+      // Note: Tag assignment is not supported in OmniFocus JavaScript automation
+      // Tags will need to be added manually in OmniFocus
+      if (args.tags && args.tags.length > 0) {
+        script += `
+          // Create tags for manual assignment later
+          var tagNames = ${JSON.stringify(args.tags)};
+          for (var i = 0; i < tagNames.length; i++) {
+            var currentTagName = tagNames[i];
+            var tags = doc.flattenedTags();
+            var tag = null;
+            
+            for (var j = 0; j < tags.length; j++) {
+              if (tags[j].name() === currentTagName) {
+                tag = tags[j];
+                break;
+              }
             }
+            
+            if (!tag) {
+              tag = app.Tag({name: currentTagName});
+              doc.tags.push(tag);
+            }
+            // Note: task.addTag(tag) is not supported in OmniFocus JavaScript automation
           }
-          
-          if (!tag) {
-            tag = app.Tag({name: currentTagName});
-            doc.tags.push(tag);
-          }
-          // Note: task.addTag(tag) is not supported in OmniFocus JavaScript automation
-        }
+        `;
+      }
+
+      script += `
+        JSON.stringify({
+          id: task.id(),
+          name: task.name(),
+          message: "Task created successfully"
+        });
       `;
+
+      const result = await this.bridge.executeScript(script);
+
+      // Handle potential JSON parsing errors
+      let taskInfo;
+      try {
+        taskInfo = JSON.parse(result);
+      } catch (error) {
+        throw new Error(
+          `Failed to parse OmniFocus response: ${error.message}. Raw response: ${result}`
+        );
+      }
+
+      let responseText = taskInfo.message + `: "${taskInfo.name}"`;
+
+      // Add note about tag limitation if tags were requested
+      if (args.tags && args.tags.length > 0) {
+        responseText += `\n\nNote: Tags (${args.tags.join(', ')}) were created but not assigned to the task due to OmniFocus JavaScript automation limitations. Please manually assign tags in OmniFocus.`;
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: responseText,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error creating task: ${error.message}`,
+          },
+        ],
+      };
     }
-
-    script += `
-      JSON.stringify({
-        id: task.id(),
-        name: task.name(),
-        message: "Task created successfully"
-      });
-    `;
-
-    const result = await this.bridge.executeScript(script);
-    const taskInfo = JSON.parse(result);
-
-    let responseText = taskInfo.message + `: "${taskInfo.name}"`;
-
-    // Add note about tag limitation if tags were requested
-    if (args.tags && args.tags.length > 0) {
-      responseText += `\n\nNote: Tags (${args.tags.join(', ')}) were created but not assigned to the task due to OmniFocus JavaScript automation limitations. Please manually assign tags in OmniFocus.`;
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: responseText,
-        },
-      ],
-    };
   }
 
   /**
@@ -224,56 +335,94 @@ export class TaskService {
    * Update an existing task
    */
   async updateTask(args) {
-    const script = `
-      ${this.bridge.getFindTaskScript(args.task_id)}
-      
-      if (!task) {
-        JSON.stringify({error: "Task not found: " + ${JSON.stringify(args.task_id)}});
-      } else {
-        // Update task properties
-        if (${JSON.stringify(args.name || null)}) {
-          task.name = ${JSON.stringify(args.name)};
-        }
-        
-        if (${JSON.stringify(args.note || null)}) {
-          task.note = ${JSON.stringify(args.note)};
-        }
-        
-        if (${args.flagged !== undefined ? 'true' : 'false'}) {
-          task.flagged = ${args.flagged || false};
-        }
-        
-        if (${JSON.stringify(args.due_date || null)}) {
-          task.dueDate = new Date(${JSON.stringify(args.due_date)});
-        }
-        
-        if (${JSON.stringify(args.defer_date || null)}) {
-          task.deferDate = new Date(${JSON.stringify(args.defer_date)});
-        }
-        
-        JSON.stringify({
-          id: task.id(),
-          name: task.name(),
-          message: "Task updated successfully"
-        });
+    try {
+      // Validate required arguments
+      if (!args.task_id || typeof args.task_id !== 'string' || args.task_id.trim() === '') {
+        throw new Error('Task ID is required and must be a non-empty string');
       }
-    `;
 
-    const result = await this.bridge.executeScript(script);
-    const response = JSON.parse(result);
+      // Validate optional arguments
+      if (args.name && (typeof args.name !== 'string' || args.name.trim() === '')) {
+        throw new Error('Task name must be a non-empty string');
+      }
 
-    if (response.error) {
-      throw new Error(response.error);
+      if (args.due_date && !this.isValidDate(args.due_date)) {
+        throw new Error('Invalid due date format. Use YYYY-MM-DD format');
+      }
+
+      if (args.defer_date && !this.isValidDate(args.defer_date)) {
+        throw new Error('Invalid defer date format. Use YYYY-MM-DD format');
+      }
+
+      const script = `
+        ${this.bridge.getFindTaskScript(args.task_id)}
+        
+        if (!task) {
+          JSON.stringify({error: "Task not found: " + ${JSON.stringify(args.task_id)}});
+        } else {
+          // Update task properties
+          if (${JSON.stringify(args.name || null)}) {
+            task.name = ${JSON.stringify(args.name.trim())};
+          }
+          
+          if (${JSON.stringify(args.note || null)}) {
+            task.note = ${JSON.stringify(args.note)};
+          }
+          
+          if (${args.flagged !== undefined ? 'true' : 'false'}) {
+            task.flagged = ${args.flagged || false};
+          }
+          
+          if (${JSON.stringify(args.due_date || null)}) {
+            task.dueDate = new Date(${JSON.stringify(args.due_date)});
+          }
+          
+          if (${JSON.stringify(args.defer_date || null)}) {
+            task.deferDate = new Date(${JSON.stringify(args.defer_date)});
+          }
+          
+          JSON.stringify({
+            id: task.id(),
+            name: task.name(),
+            message: "Task updated successfully"
+          });
+        }
+      `;
+
+      const result = await this.bridge.executeScript(script);
+
+      // Handle potential JSON parsing errors
+      let response;
+      try {
+        response = JSON.parse(result);
+      } catch (error) {
+        throw new Error(
+          `Failed to parse OmniFocus response: ${error.message}. Raw response: ${result}`
+        );
+      }
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: response.message + `: "${response.name}"`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error updating task: ${error.message}`,
+          },
+        ],
+      };
     }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: response.message + `: "${response.name}"`,
-        },
-      ],
-    };
   }
 
   /**
