@@ -92,10 +92,14 @@ export class TaskService {
    * Create a new task
    */
   async createTask(args) {
-    const script = `
+    // Build the script with proper variable handling
+    let script = `
       var task;
-      
-      if (${JSON.stringify(args.project || null)}) {
+    `;
+
+    // Add to project or inbox
+    if (args.project) {
+      script += `
         ${this.bridge.getFindProjectScript(args.project)}
         
         if (!project) {
@@ -106,55 +110,63 @@ export class TaskService {
         
         task = app.Task({name: ${JSON.stringify(args.name)}});
         project.tasks.push(task);
-      } else {
+      `;
+    } else {
+      script += `
         // Add to inbox
         task = app.Task({name: ${JSON.stringify(args.name)}});
         doc.inboxTasks.push(task);
-      }
-      
-      // Set task properties
-      if (${JSON.stringify(args.note || null)}) {
-        task.note = ${JSON.stringify(args.note)};
-      }
-      
-      if (${args.flagged || false}) {
-        task.flagged = true;
-      }
-      
-      if (${args.estimated_minutes || null}) {
-        task.estimatedMinutes = ${args.estimated_minutes};
-      }
-      
-      if (${JSON.stringify(args.due_date || null)}) {
-        task.dueDate = new Date(${JSON.stringify(args.due_date)});
-      }
-      
-      if (${JSON.stringify(args.defer_date || null)}) {
-        task.deferDate = new Date(${JSON.stringify(args.defer_date)});
-      }
-      
-      // Add tags
-      if (${JSON.stringify(args.tags || null)}) {
-        var tagNames = ${JSON.stringify(args.tags || [])};
+      `;
+    }
+
+    // Set task properties
+    if (args.note) {
+      script += `task.note = ${JSON.stringify(args.note)};\n`;
+    }
+
+    if (args.flagged) {
+      script += `task.flagged = true;\n`;
+    }
+
+    if (args.estimated_minutes) {
+      script += `task.estimatedMinutes = ${args.estimated_minutes};\n`;
+    }
+
+    if (args.due_date) {
+      script += `task.dueDate = new Date(${JSON.stringify(args.due_date)});\n`;
+    }
+
+    if (args.defer_date) {
+      script += `task.deferDate = new Date(${JSON.stringify(args.defer_date)});\n`;
+    }
+
+    // Add tags with proper variable handling
+    if (args.tags && args.tags.length > 0) {
+      script += `
+        // Add tags
+        var tagNames = ${JSON.stringify(args.tags)};
         for (var i = 0; i < tagNames.length; i++) {
+          var currentTagName = tagNames[i];
           var tags = doc.flattenedTags();
           var tag = null;
           
           for (var j = 0; j < tags.length; j++) {
-            if (tags[j].name() === tagNames[i]) {
+            if (tags[j].name() === currentTagName) {
               tag = tags[j];
               break;
             }
           }
           
           if (!tag) {
-            tag = app.Tag({name: tagNames[i]});
+            tag = app.Tag({name: currentTagName});
             doc.tags.push(tag);
           }
           task.addTag(tag);
         }
-      }
-      
+      `;
+    }
+
+    script += `
       JSON.stringify({
         id: task.id(),
         name: task.name(),
@@ -406,14 +418,18 @@ export class TaskService {
    * Create a recurring task
    */
   async createRecurringTask(args) {
-    const script = `
+    // Build the script with proper variable handling
+    let script = `
       var task = app.Task({name: ${JSON.stringify(args.name)}});
       
       // Set basic properties
-      if (${JSON.stringify(args.note || null)}) {
-        task.note = ${JSON.stringify(args.note)};
-      }
-      
+    `;
+
+    if (args.note) {
+      script += `task.note = ${JSON.stringify(args.note)};\n`;
+    }
+
+    script += `
       // Set repeat rule
       var repeatRule = ${JSON.stringify(args.repeat_rule)};
       var repetitionRule = app.RepetitionRule();
@@ -448,14 +464,15 @@ export class TaskService {
       }
       
       task.repetitionRule = repetitionRule;
-      
-      // Set first due date
-      if (${JSON.stringify(args.first_due_date || null)}) {
-        task.dueDate = new Date(${JSON.stringify(args.first_due_date)});
-      }
-      
-      // Add to project or inbox
-      if (${JSON.stringify(args.project || null)}) {
+    `;
+
+    if (args.first_due_date) {
+      script += `task.dueDate = new Date(${JSON.stringify(args.first_due_date)});\n`;
+    }
+
+    // Add to project or inbox
+    if (args.project) {
+      script += `
         ${this.bridge.getFindProjectScript(args.project)}
         
         if (!project) {
@@ -464,32 +481,38 @@ export class TaskService {
         }
         
         project.tasks.push(task);
-      } else {
-        doc.inboxTasks.push(task);
-      }
-      
-      // Add tags
-      if (${JSON.stringify(args.tags || null)}) {
-        var tagNames = ${JSON.stringify(args.tags || [])};
+      `;
+    } else {
+      script += `doc.inboxTasks.push(task);\n`;
+    }
+
+    // Add tags with proper variable handling
+    if (args.tags && args.tags.length > 0) {
+      script += `
+        // Add tags
+        var tagNames = ${JSON.stringify(args.tags)};
         for (var j = 0; j < tagNames.length; j++) {
+          var currentTagName = tagNames[j];
           var tags = doc.flattenedTags();
           var tag = null;
           
           for (var k = 0; k < tags.length; k++) {
-            if (tags[k].name() === tagNames[j]) {
+            if (tags[k].name() === currentTagName) {
               tag = tags[k];
               break;
             }
           }
           
           if (!tag) {
-            tag = app.Tag({name: tagNames[j]});
+            tag = app.Tag({name: currentTagName});
             doc.tags.push(tag);
           }
           task.addTag(tag);
         }
-      }
-      
+      `;
+    }
+
+    script += `
       JSON.stringify({
         id: task.id(),
         name: task.name(),
@@ -563,7 +586,8 @@ export class TaskService {
    * Organize tasks by moving or tagging
    */
   async organizeTasks(args) {
-    const script = `
+    // Build the script with proper variable handling
+    let script = `
       var results = [];
       var taskNames = ${JSON.stringify(args.tasks)};
       
@@ -576,60 +600,72 @@ export class TaskService {
         }
         
         var actions = [];
-        
+    `;
+
+    // Move to project
+    if (args.target_project) {
+      script += `
         // Move to project
-        if (${JSON.stringify(args.target_project || null)}) {
-          ${this.bridge.getFindProjectScript(args.target_project)}
-          
-          if (project) {
-            project.tasks.push(task);
-            actions.push("moved to " + project.name());
-          } else {
-            actions.push("project not found: " + ${JSON.stringify(args.target_project)});
-          }
-        }
+        ${this.bridge.getFindProjectScript(args.target_project)}
         
+        if (project) {
+          project.tasks.push(task);
+          actions.push("moved to " + project.name());
+        } else {
+          actions.push("project not found: " + ${JSON.stringify(args.target_project)});
+        }
+      `;
+    }
+
+    // Add tags
+    if (args.add_tags && args.add_tags.length > 0) {
+      script += `
         // Add tags
-        if (${JSON.stringify(args.add_tags || null)}) {
-          var addTags = ${JSON.stringify(args.add_tags || [])};
-          for (var l = 0; l < addTags.length; l++) {
-            var tags = doc.flattenedTags();
-            var tag = null;
-            
-            for (var m = 0; m < tags.length; m++) {
-              if (tags[m].name() === addTags[l]) {
-                tag = tags[m];
-                break;
-              }
-            }
-            
-            if (!tag) {
-              tag = app.Tag({name: addTags[l]});
-              doc.tags.push(tag);
-            }
-            task.addTag(tag);
-            actions.push("added tag: " + addTags[l]);
-          }
-        }
-        
-        // Remove tags
-        if (${JSON.stringify(args.remove_tags || null)}) {
-          var removeTags = ${JSON.stringify(args.remove_tags || [])};
-          var taskTags = task.tags();
+        var addTags = ${JSON.stringify(args.add_tags)};
+        for (var l = 0; l < addTags.length; l++) {
+          var currentAddTag = addTags[l];
+          var tags = doc.flattenedTags();
+          var tag = null;
           
-          for (var n = 0; n < removeTags.length; n++) {
-            var removeTagName = removeTags[n];
-            
-            for (var o = 0; o < taskTags.length; o++) {
-              if (taskTags[o].name() === removeTagName) {
-                task.removeTag(taskTags[o]);
-                actions.push("removed tag: " + removeTagName);
-                break;
-              }
+          for (var m = 0; m < tags.length; m++) {
+            if (tags[m].name() === currentAddTag) {
+              tag = tags[m];
+              break;
+            }
+          }
+          
+          if (!tag) {
+            tag = app.Tag({name: currentAddTag});
+            doc.tags.push(tag);
+          }
+          task.addTag(tag);
+          actions.push("added tag: " + currentAddTag);
+        }
+      `;
+    }
+
+    // Remove tags
+    if (args.remove_tags && args.remove_tags.length > 0) {
+      script += `
+        // Remove tags
+        var removeTags = ${JSON.stringify(args.remove_tags)};
+        var taskTags = task.tags();
+        
+        for (var n = 0; n < removeTags.length; n++) {
+          var removeTagName = removeTags[n];
+          
+          for (var o = 0; o < taskTags.length; o++) {
+            if (taskTags[o].name() === removeTagName) {
+              task.removeTag(taskTags[o]);
+              actions.push("removed tag: " + removeTagName);
+              break;
             }
           }
         }
-        
+      `;
+    }
+
+    script += `
         results.push(task.name() + ": " + (actions.length > 0 ? actions.join(", ") : "no changes"));
       }
       

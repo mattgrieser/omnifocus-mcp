@@ -1,0 +1,124 @@
+# Cursor Rules Configuration
+
+## Always Allowed Commands
+
+### Test Commands
+- Any test-related commands are always allowed:
+  - `npm test`, `npm run test`
+  - `vitest`, `vitest run`, `vitest --run`
+  - `nr test`, `nr run test`
+  - `jest`, `jest --watch`
+  - `yarn test`, `yarn run test`
+  - `pnpm test`, `pnpm run test`
+  - Any command containing "test" in the name
+  - Any command containing "spec" in the name
+  - Any command containing "vitest" in the name
+  - Any command containing "jest" in the name
+
+### Build Commands
+- Any build-related commands are always allowed:
+  - `npm run build`, `npm build`
+  - `tsc`, `tsc --watch`
+  - `yarn build`, `yarn run build`
+  - `pnpm build`, `pnpm run build`
+  - `webpack`, `webpack --watch`
+  - `vite build`
+  - `rollup`
+  - `esbuild`
+  - Any command containing "build" in the name
+  - Any command containing "compile" in the name
+  - Any command containing "tsc" in the name
+
+### File and Directory Operations
+- File and directory creation/modification commands are always allowed:
+  - `touch` (create files)
+  - `mkdir` (create directories)
+  - `cp` (copy files/directories)
+  - `mv` (move/rename files/directories)
+  - `rm` (remove files/directories)
+  - `ln` (create links)
+  - `chmod` (change permissions)
+  - `chown` (change ownership)
+  - `ls` (list files)
+  - `cat` (view file contents)
+  - `head`, `tail` (view file parts)
+  - `grep`, `rg` (search in files)
+  - `find` (find files)
+  - `tree` (show directory structure)
+
+### Development Tools
+- Common development tool commands are always allowed:
+  - `git` commands (status, add, commit, push, pull, etc.)
+  - `npm`, `yarn`, `pnpm` package management commands
+  - `node` execution
+  - `npx` execution
+  - `eslint`, `prettier` formatting/linting
+  - `typescript` compiler commands
+  - `babel` compilation commands
+
+### System Commands
+- Basic system commands are always allowed:
+  - `cd` (change directory)
+  - `pwd` (print working directory)
+  - `echo` (print text)
+  - `which` (find command location)
+  - `whoami` (current user)
+  - `date` (current date/time)
+  - `ps` (process status)
+  - `top`, `htop` (system monitoring)
+
+## Security Note
+This configuration allows common development and testing commands. For production environments, you may want to be more restrictive with system commands and file operations.
+
+## Development Workflow - Test-Driven Development (TDD)
+
+### Always Follow This Order:
+1. **Write Tests First** - Always start by writing comprehensive tests that define the expected behavior
+2. **Write Minimal Code** - Implement just enough code to make the tests pass
+3. **Run Tests** - Execute tests to verify they pass
+4. **Refactor** - Clean up and improve the code while keeping tests green
+5. **Repeat** - Continue the cycle for new features or improvements
+
+### Test-First Guidelines:
+- **Before writing any code**, write tests that describe the desired functionality
+- Tests should cover both happy path and edge cases
+- Use descriptive test names that explain the expected behavior
+- Write tests for all public methods and functions
+- Include integration tests for complex workflows
+- Test error conditions and edge cases
+
+### Code Quality Standards:
+- Write clean, readable code that passes all tests
+- Follow the project's coding standards and conventions
+- Use meaningful variable and function names
+- Add appropriate comments and documentation
+- Keep functions small and focused on a single responsibility
+
+### Testing Commands Priority:
+When suggesting commands, prioritize test-related commands:
+1. `npm test` or `vitest` - Run all tests
+2. `npm run test:watch` - Run tests in watch mode
+3. `npm run test:coverage` - Run tests with coverage
+4. `npm run test:unit` - Run unit tests only
+5. `npm run test:integration` - Run integration tests only
+
+### Workflow Commands:
+- Always suggest running tests after making code changes
+- Use `npm test` to verify changes don't break existing functionality
+- Use `npm run test:watch` during active development
+- Use `npm run build` to ensure code compiles correctly
+- Use `npm run lint` to check code quality
+
+### When Adding New Features:
+1. Write failing tests that describe the new feature
+2. Implement minimal code to make tests pass
+3. Run tests to confirm they pass
+4. Refactor code while keeping tests green
+5. Add more tests if edge cases are discovered
+
+### When Fixing Bugs:
+1. Write a test that reproduces the bug
+2. Verify the test fails (confirming the bug)
+3. Fix the code to make the test pass
+4. Run all tests to ensure no regressions
+5. Refactor if needed while keeping tests green
