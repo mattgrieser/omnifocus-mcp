@@ -137,7 +137,20 @@ export class TaskService {
       if (${JSON.stringify(args.tags || null)}) {
         var tagNames = ${JSON.stringify(args.tags || [])};
         for (var i = 0; i < tagNames.length; i++) {
-          ${this.bridge.getFindOrCreateTagScript('tagNames[i]')}
+          var tags = doc.flattenedTags();
+          var tag = null;
+          
+          for (var j = 0; j < tags.length; j++) {
+            if (tags[j].name() === tagNames[i]) {
+              tag = tags[j];
+              break;
+            }
+          }
+          
+          if (!tag) {
+            tag = app.Tag({name: tagNames[i]});
+            doc.tags.push(tag);
+          }
           task.addTag(tag);
         }
       }
@@ -206,8 +219,8 @@ export class TaskService {
           task.note = ${JSON.stringify(args.note)};
         }
         
-        if (${args.flagged !== undefined}) {
-          task.flagged = ${args.flagged};
+        if (${args.flagged !== undefined ? 'true' : 'false'}) {
+          task.flagged = ${args.flagged || false};
         }
         
         if (${JSON.stringify(args.due_date || null)}) {
@@ -412,6 +425,10 @@ export class TaskService {
           break;
         case 'weekly':
           repetitionRule.unit = 'week';
+          // Handle specific days for weekly recurrence
+          if (repeatRule.days_of_week && repeatRule.days_of_week.length > 0) {
+            repetitionRule.daysOfWeek = repeatRule.days_of_week;
+          }
           break;
         case 'monthly':
           repetitionRule.unit = 'month';
@@ -455,7 +472,20 @@ export class TaskService {
       if (${JSON.stringify(args.tags || null)}) {
         var tagNames = ${JSON.stringify(args.tags || [])};
         for (var j = 0; j < tagNames.length; j++) {
-          ${this.bridge.getFindOrCreateTagScript('tagNames[j]')}
+          var tags = doc.flattenedTags();
+          var tag = null;
+          
+          for (var k = 0; k < tags.length; k++) {
+            if (tags[k].name() === tagNames[j]) {
+              tag = tags[k];
+              break;
+            }
+          }
+          
+          if (!tag) {
+            tag = app.Tag({name: tagNames[j]});
+            doc.tags.push(tag);
+          }
           task.addTag(tag);
         }
       }
@@ -563,7 +593,20 @@ export class TaskService {
         if (${JSON.stringify(args.add_tags || null)}) {
           var addTags = ${JSON.stringify(args.add_tags || [])};
           for (var l = 0; l < addTags.length; l++) {
-            ${this.bridge.getFindOrCreateTagScript('addTags[l]')}
+            var tags = doc.flattenedTags();
+            var tag = null;
+            
+            for (var m = 0; m < tags.length; m++) {
+              if (tags[m].name() === addTags[l]) {
+                tag = tags[m];
+                break;
+              }
+            }
+            
+            if (!tag) {
+              tag = app.Tag({name: addTags[l]});
+              doc.tags.push(tag);
+            }
             task.addTag(tag);
             actions.push("added tag: " + addTags[l]);
           }

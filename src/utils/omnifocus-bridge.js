@@ -83,14 +83,14 @@ export class OmniFocusBridge {
       var tag = null;
       
       for (var i = 0; i < tags.length; i++) {
-        if (tags[i].name() === ${JSON.stringify(tagName)}) {
+        if (tags[i].name() === ${tagName}) {
           tag = tags[i];
           break;
         }
       }
       
       if (!tag) {
-        tag = app.Tag({name: ${JSON.stringify(tagName)}});
+        tag = app.Tag({name: ${tagName}});
         doc.tags.push(tag);
       }
     `;
